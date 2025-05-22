@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Turnos</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#121212" />
+  <style>
+    body {
+      background-color: #121212;
+      color: #cccccc;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1em;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8em;
+      margin-bottom: 0.5em;
+    }
+
+    label, textarea, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 1em;
+      font-size: 1em;
+    }
+
+    input, textarea {
+      background-color: #1e1e1e;
+      color: #cccccc;
+      border: 1px solid #333;
+      padding: 0.7em;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #8b0000;
+      color: #fff;
+      border: none;
+      padding: 1em;
+      width: 100%;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 1em;
+    }
+
+    button:hover {
+      background-color: #5c0000;
+    }
+
+    #resultado {
+      margin-top: 2em;
+      padding: 1em;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+
+    footer {
+      margin-top: 3em;
+      text-align: center;
+      font-size: 0.9em;
+      color: #777;
+    }
+  </style>
+  <script>
+    function generarTurnos() {
+      const nombres = document.getElementById("nombres").value.trim().split("\n").filter(n => n.trim() !== "");
+      const inicio = document.getElementById("inicio").value;
+      const fin = document.getElementById("fin").value;
+      const aleatorio = document.getElementById("aleatorio").checked;
+      const resultado = document.getElementById("resultado");
+
+      if (nombres.length < 1 || !inicio || !fin) {
+        resultado.innerText = "Por favor, rellena todos los campos.";
+        return;
+      }
+
+      const inicioHora = parseInt(inicio.split(":")[0], 10);
+      const inicioMin = parseInt(inicio.split(":")[1], 10);
+      const finHora = parseInt(fin.split(":")[0], 10);
+      const finMin = parseInt(fin.split(":")[1], 10);
+
+      let totalMin = (finHora * 60 + finMin) - (inicioHora * 60 + inicioMin);
+      if (totalMin <= 0) totalMin += 1440; // paso a siguiente día
+
+      const tiempoPorPersona = Math.floor(totalMin / nombres.length);
+      const turnos = [];
+      const orden = aleatorio ? nombres.sort(() => Math.random() - 0.5) : nombres;
+
+      let actualMin = inicioHora * 60 + inicioMin;
+
+      for (let i = 0; i < orden.length; i++) {
+        const nombre = orden[i];
+        const inicioTurno = actualMin;
+        const finTurno = actualMin + tiempoPorPersona;
+
+        const h1 = String(Math.floor(inicioTurno / 60)).padStart(2, '0');
+        const m1 = String(inicioTurno % 60).padStart(2, '0');
+        const h2 = String(Math.floor(finTurno / 60) % 24).padStart(2, '0');
+        const m2 = String(finTurno % 60).padStart(2, '0');
+
+        // Calcular horas y minutos
+        const horas = Math.floor(tiempoPorPersona / 60);
+        const minutos = tiempoPorPersona % 60;
+        const tiempoStr = `${horas > 0 ? horas + "h " : ""}${minutos}min`;
+
+        turnos.push(`${nombre}: ${h1}:${m1} - ${h2}:${m2}  (${tiempoStr})`);
+        actualMin = finTurno;
+      }
+
+      resultado.innerText = turnos.join("\n");
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => console.log('Service Worker registrado'))
+        .catch(err => console.log('Error registrando Service Worker:', err));
+    }
+  </script>
+</head>
+<body>
+  <h1>IMAGINARIAS</h1>
+
+  <label for="nombres">Personal (uno por línea):</label>
+  <textarea id="nombres" rows="5" placeholder="Ejemplo:Peña, Gutiérrez, Ordoñez "></textarea>
+
+  <label for="inicio">Hora de inicio:</label>
+  <input type="time" id="inicio" />
+
+  <label for="fin">Hora de fin:</label>
+  <input type="time" id="fin" />
+
+  <label><input type="checkbox" id="aleatorio" /> Reparto aleatorio</label>
+
+  <button onclick="generarTurnos()">Generar turnos</button>
+
+  <div id="resultado"></div>
+
+  <footer>© 2025 · Imaginarias · Núñez</footer>
+</body>
+</html>
