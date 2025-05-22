@@ -1,13 +1,7 @@
-self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open("turnos-cache").then(cache => {
-      return cache.addAll(["index.html", "manifest.json", "icono.png"]);
-    })
-  );
-});
-
-self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(response => response || fetch(e.request))
-  );
-});
+const CACHE_NAME = 'turnos-cache-v1';
+const urlsToCache = [
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
+];
